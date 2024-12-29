@@ -25,7 +25,7 @@ const fetchEmails = async () => {
 
     await connection.openBox("INBOX");
     // const searchCriteria = ['FLAGGED'];
-    const date = new Date("2024-12-09");
+    const date = new Date();
     const formattedDate = date.toISOString().split("T")[0];
     const searchCriteria = [["ON", formattedDate]];
     const fetchOptions = { bodies: ["HEADER", "TEXT"], struct: true };

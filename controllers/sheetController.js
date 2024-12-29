@@ -2,28 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const exceljs = require('exceljs');
 
-// const parseSpreadsheets = async () => {
-//   const uploadsDir = path.join(__dirname, '../uploads');
-//   const files = fs.readdirSync(uploadsDir);
-
-//   let combinedData = [];
-//   for (let file of files) {
-//     const filePath = path.join(uploadsDir, file);
-//     const workbook = new exceljs.Workbook();
-//     await workbook.xlsx.readFile(filePath);
-
-//     const worksheet = workbook.worksheets[0];
-//     worksheet.eachRow((row, rowNumber) => {
-//       if (rowNumber > 1) { // Skip header row
-//         combinedData.push(row.values);
-//       }
-//     });
-//   }
-
-//   console.log("Combined Data:", combinedData);
-//   return combinedData;
-// };
-
 const generateCombinedSheet = async () => {
   const uploadsDir = path.join(__dirname, '../uploads');
   const combinedFilePath = path.join(__dirname, '../output', 'combined_data.xlsx');
@@ -38,9 +16,14 @@ const generateCombinedSheet = async () => {
     await workbook.xlsx.readFile(filePath);
 
     const worksheet = workbook.worksheets[0];
+    const seenInvoices = new Set();
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber > 1) { // Skip header row
-        allData.push(row.values); // Add rows to allData array
+        const invoice = row.values[4]; // Assuming Invoice is in the 4th column
+        if (!seenInvoices.has(invoice)) {
+          seenInvoices.add(invoice); // Add invoice to the set
+          allData.push(row.values); // Add unique row to allData array
+        }
       }
     });
   }
@@ -62,15 +45,31 @@ const generateCombinedSheet = async () => {
 
   // Step 4: Add data to the combined sheet
   for (let row of allData) {
-    combinedSheet.addRow({
-      date: row[1] || '', // Replace row indexes as per your raw data structure
+    const newRow = combinedSheet.addRow({
+      // Here Our all data is inside an array so extract it in below format
+      // [
+      //   <1 empty item>,
+      //   2024-11-19T00:00:00.000Z, // working date
+      //   'dinesh kumar',
+      //   2024-11-15T00:00:00.000Z, // date of service
+      //   '1371043',
+      //   1216,
+      //   '(REG) MULTIPLE COVERAGES WITH SAME SUBSCRIBER ID',
+      //   'Done'
+      // ],
+      date: row[1] || '', 
       bsoName: row[2] || '',
       dos: row[3] || '',
-      invoice: row[4] || '',
+      invoice: row[4],
       workQueue: row[5] || '',
       editError: row[6] || '',
       status: 'Done'
     });
+
+  // Apply alignment to the newly added row and column
+  newRow.eachCell((cell) => {
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+  });
   }
 
   // Step 5: Save the combined Excel file
@@ -81,17 +80,14 @@ const generateCombinedSheet = async () => {
 };
 
 const generateSummaryReport = async () => {
-  const uploadsDir = path.join(__dirname, '../uploads');
+  const outputFilePath = path.join(__dirname, '../output', 'combined_data.xlsx');
   const summaryFilePath = path.join(__dirname, '../output', 'team_summary.xlsx');
 
-  const files = fs.readdirSync(uploadsDir);
   let rawData = [];
-
-  // Step 1: Collect all data from uploaded sheets
-  for (let file of files) {
-    const filePath = path.join(uploadsDir, file);
-    const workbook = new exceljs.Workbook();
-    await workbook.xlsx.readFile(filePath);
+  
+    // Step 1: Read data from the combined Excel file
+  const workbook = new exceljs.Workbook();
+  await workbook.xlsx.readFile(outputFilePath);
 
     const worksheet = workbook.worksheets[0];
     worksheet.eachRow((row, rowNumber) => {
@@ -102,7 +98,6 @@ const generateSummaryReport = async () => {
         });
       }
     });
-  }
 
   // Step 2: Aggregate data
   const summary = {};

@@ -1,27 +1,18 @@
 const express = require('express');
 const { generateCombinedSheet } = require('../controllers/sheetController');
-const { sendEmailWithAttachment } = require('../controllers/emailControllers');
+// const { sendEmailWithAttachment } = require('../controllers/emailControllers');
 
 const { generateSummaryReport } = require('../controllers/sheetController');
 const { sendSummaryReport } = require('../controllers/emailControllers');
 
 const router = express.Router();
 
-// router.get('/parse-sheets', async (req, res) => {
-//   try {
-//     const data = await parseSpreadsheets();
-//     res.status(200).json({ message: "Sheets parsed successfully!", data });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
 router.get('/generate-combined-sheet', async (req, res) => {
   try {
     const filePath = await generateCombinedSheet();
 
     // Step 2: Send the combined sheet as an email
-    await sendEmailWithAttachment(filePath);
+    // await sendEmailWithAttachment(filePath);
     res.status(200).json({ message: 'Combined sheet generated and mailed successfully!',filePath });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -37,7 +28,7 @@ router.get('/generate-summary', async (req, res) => {
     // const recipients = ['cloudservice424@gmail.com','hidummymail@gmail.com','nitish.naroun123@gmail.com']; 
 
     // Step 3: Send the summary report
-    await sendSummaryReport(filePath, recepient);
+    // await sendSummaryReport(filePath, recepient);
 
     res.status(200).json({ message: 'Summary report generated and emailed successfully!' });
   } catch (err) {
